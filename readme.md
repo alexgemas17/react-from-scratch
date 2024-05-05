@@ -7,6 +7,7 @@ React's reimplementation to understand how it works under the hood.
 * Implemented useState hook
 
 Incoming features:
+* Make "@jsx j" global instead of define it in all files 
 * Implement useEffect
 * Implement useContext
 * Implement custom JSX parser
