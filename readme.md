@@ -9,6 +9,7 @@ React's reimplementation to understand how it works under the hood.
 
 Incoming features:
 * Implement Fragment
+* Make "@jsx j" global instead of define it in all files 
 * Implement custom JSX parser
 * Implement other hooks such as useContext
 
