@@ -12,9 +12,12 @@ export function j(type, props, ...args) {
 /* ------------------------------------------------------------ */
 let _rootElement = null
 let _rootJsxElement = null
-let _stateID = -1
+let _stateID = 0
 const _states = []
+let _effectID = 0
+const _effects = []
 let _virtualDOM = {}
+let _queueStateOps = []
 
 function DomRoot(htmlElement) {
   _rootElement = htmlElement
@@ -27,7 +30,7 @@ DomRoot.prototype.render = function (children) {
 function render(el, jsxElement, virtualNode = undefined) {
   if (typeof jsxElement === 'string' || typeof jsxElement === 'number') {
     const newContent = document.createTextNode(jsxElement);
-    virtualNode.addNode(new VirtualNode(newContent, virtualNode, 'primitive', {}, jsxElement))
+    virtualNode.addNode(new VirtualNode(newContent, virtualNode, 'primitive', {}, `${jsxElement}`))
     return el.append(newContent)
   }
 
@@ -58,7 +61,8 @@ function update(virtualNode, newJsxElement) {
   let runUpdate = false
   if (virtualNode.type === 'primitive') {
     if(typeof newJsxElement === 'string' || typeof newJsxElement === 'number'){
-      runUpdate = virtualNode.value !== newJsxElement
+      const newValue = typeof newJsxElement === 'number' ? newJsxElement.toString() : newJsxElement
+      runUpdate = virtualNode.value !== newValue
     }
   }
 
@@ -79,7 +83,13 @@ function update(virtualNode, newJsxElement) {
           const jsxChild = newJsxElement.children[index];
           const virtualChild = virtualNode.children[index];
 
-          update(virtualChild, jsxChild)
+          if(typeof jsxChild.type !== 'function') {
+            runUpdate = virtualChild.isChildrenDiff(jsxChild)
+          }
+
+          if(!runUpdate) {
+            update(virtualChild, jsxChild)
+          }
         }
       }
     }
@@ -109,36 +119,36 @@ function update(virtualNode, newJsxElement) {
 }
 
 function updateDOM() {
-  _stateID = -1
+  _stateID = 0
+  _effectID = 0
   update(_virtualDOM, _rootJsxElement)
 }
 
 function useState(initialState) {
-  const id = ++_stateID
-
-  if (_states[id] === undefined) {
-    _states[id] = initialState
+  if (_states[_stateID] === undefined) {
+    _states[_stateID] = initialState
   }
 
+  const setStateId = _stateID
   const setValue = (callback) => {
-    _states[id] = callback(_states[id])
-    return updateDOM()
+    _states[setStateId] = callback(_states[setStateId])
+    updateDOM()
   }
   
   return [
-    _states[id],
+    _states[_stateID++],
     setValue
   ]
 }
 
 function useEffect(callback, newDepsArray) {
-  const id = ++_stateID
-  const oldDepsArray = _states[id]
-  const runEffect = oldDepsArray ? !newDepsArray.every((dep, index) => dep === oldDepsArray[index]) : true
+  const oldDepsArray = _effects[_effectID]
+  const runEffect = oldDepsArray ? (newDepsArray.length !== 0 && !newDepsArray.every((dep, index) => dep === oldDepsArray[index]) ) : true
   if(runEffect) {
     callback()
-    _states[id] = newDepsArray
+    _effects[_effectID] = newDepsArray
   }
+  _effectID++
 }
 
 function createRoot(htmlElement) {

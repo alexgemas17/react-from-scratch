@@ -19,7 +19,7 @@ export function Counter ({ title }) {
   }
 
   return (
-    <div>
+    <div className="counter">
       <h2>{title}</h2>
       <CounterTitle text={counter} />
       <div className="buttons-container">

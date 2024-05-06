@@ -2,6 +2,7 @@
 import { j } from "./react";
 import { Counter } from "./Counter";
 import { List } from "./List";
+import { FetchExample } from "./FetchExample";
 
 export default function App() {
   return (
@@ -10,8 +11,8 @@ export default function App() {
 
       <div className="container">
         <div>
-          <Counter title='First'/>
-          <Counter title='second'/>
+          <Counter title='Counter'/>
+          <FetchExample />
         </div>
 
         <List />
