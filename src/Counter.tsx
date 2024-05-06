@@ -6,6 +6,10 @@ import ReactDOM from "./react";
 export function Counter ({ title }) {
   const [counter, setValue] = ReactDOM.useState(0);
 
+  ReactDOM.useEffect(() => {
+    console.log('Counter changed!', counter);
+  }, [counter])
+
   const add = () => {
     setValue((prev) => prev + 1);
   }

@@ -131,13 +131,24 @@ function useState(initialState) {
   ]
 }
 
+function useEffect(callback, newDepsArray) {
+  const id = ++_stateID
+  const oldDepsArray = _states[id]
+  const runEffect = oldDepsArray ? !newDepsArray.every((dep, index) => dep === oldDepsArray[index]) : true
+  if(runEffect) {
+    callback()
+    _states[id] = newDepsArray
+  }
+}
+
 function createRoot(htmlElement) {
   return new DomRoot(htmlElement)
 }
 
 const ReactDOM = {
   createRoot,
-  useState
+  useState,
+  useEffect
 }
 
 export default ReactDOM
