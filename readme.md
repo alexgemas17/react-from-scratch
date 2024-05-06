@@ -13,6 +13,20 @@ Incoming features:
 * Implement custom JSX parser
 * Implement other hooks such as useContext
 
+## App example
+
+To run this project:
+```
+npm install
+npm run dev
+``` 
+
+The app has:
+* Counter component
+* Component with fetching to random images
+* A list with a button to add/remove items in the list
+ 
+
 ## Build by 🛠️
 
 * [Vite](https://vitejs.dev/)

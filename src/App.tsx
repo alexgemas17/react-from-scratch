@@ -10,11 +10,8 @@ export default function App() {
       <h1 className="title-header">Hello world!</h1>
 
       <div className="container">
-        <div>
-          <Counter title='Counter'/>
-          <FetchExample />
-        </div>
-
+        <Counter title='Counter'/>
+        <div><FetchExample /></div>
         <List />
       </div>
     </main>

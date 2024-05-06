@@ -6,7 +6,7 @@ function ListItem({text, callback}) {
 }
 
 export function List() {
-  const [list, setState] = ReactDOM.useState(['Item 1', 'Item 2'])
+  const [list, setState] = ReactDOM.useState(['Item 1', 'Item 2','Item 3','Item 4'])
 
   function addItem() {
     setState(prev => [...prev, `item ${list.length + 1}`])

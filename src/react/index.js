@@ -49,9 +49,10 @@ function render(el, jsxElement, virtualNode = undefined) {
     });
 
   if (jsxElement.props) {
-    const { className, onClick } = jsxElement.props
+    const { className, onClick, ...others } = jsxElement.props
     className && newNode.setAttribute('class', className)
     onClick && newNode.addEventListener('click', function(event) { onClick(event) }, false)
+    others && Object.entries(others).map(([key, value]) => newNode.setAttribute(key, value))
   }
 
   el.append(newNode)
@@ -82,14 +83,8 @@ function update(virtualNode, newJsxElement) {
         for (let index = 0; index < newJsxElement.children.length; index++) {
           const jsxChild = newJsxElement.children[index];
           const virtualChild = virtualNode.children[index];
-
-          if(typeof jsxChild.type !== 'function') {
-            runUpdate = virtualChild.isChildrenDiff(jsxChild)
-          }
-
-          if(!runUpdate) {
-            update(virtualChild, jsxChild)
-          }
+          
+          update(virtualChild, jsxChild)
         }
       }
     }
@@ -103,17 +98,18 @@ function update(virtualNode, newJsxElement) {
       node = virtualNode.parentNode
       node.removeNode(virtualNode)
       element = node.el
-      element.innerHTML = ""
+      virtualNode.el.remove()
       render(element, newJsxElement, node)
-
     } else {
-      virtualNode.el.innerHTML = ""
+      virtualNode.el.remove()
       virtualNode.removeAllChildren()
-
-      newJsxElement.children &&
-      newJsxElement.children.forEach(child => {
-        render(virtualNode.el, child, virtualNode)
-      });
+      virtualNode.parentNode.removeNode(virtualNode)
+      
+      render(virtualNode.parentNode.el, newJsxElement, virtualNode.parentNode)
+      // newJsxElement.children &&
+      // newJsxElement.children.forEach(child => {
+      //   render(virtualNode.el, child, virtualNode)
+      // });
     }
   }
 }

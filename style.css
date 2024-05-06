@@ -69,6 +69,7 @@ h2 {
 
 .fetch-content {
   display: flex;
+  flex-direction: column;
 }
 
 .list-container {
@@ -77,6 +78,16 @@ h2 {
   gap: 10px;
   max-height: 250px;
   width: 100%;
+}
+
+.title {
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.picture img {
+  width: 400px;
+  height: auto;
 }
 
 button {

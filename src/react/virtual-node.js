@@ -48,6 +48,10 @@ export class VirtualNode {
 
   isChildrenDiff(newJsxEl) {
     if (typeof newJsxEl === "string" || typeof newJsxEl === "number") {
+      if(this.type === 'primitive') {
+        return false
+      }
+      
       const newValue =
         typeof newJsxEl === "number" ? newJsxEl.toString() : newJsxEl;
       return newValue !== this.value;
