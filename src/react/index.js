@@ -27,7 +27,7 @@ DomRoot.prototype.render = function (children) {
   render(_rootElement, children)
 }
 
-function render(el, jsxElement, virtualNode = undefined) {
+function render(el, jsxElement, virtualNode = undefined, oldVirtualEl = undefined) {
   if (typeof jsxElement === 'string' || typeof jsxElement === 'number') {
     const newContent = document.createTextNode(jsxElement);
     virtualNode.addNode(new VirtualNode(newContent, virtualNode, 'primitive', {}, `${jsxElement}`))
@@ -41,7 +41,11 @@ function render(el, jsxElement, virtualNode = undefined) {
   const newNode = document.createElement(jsxElement.type)
   const vn = new VirtualNode(newNode, virtualNode, jsxElement.type, jsxElement.props)
 
-  virtualNode ? virtualNode.addNode(vn) : _virtualDOM = vn 
+  if (oldVirtualEl) {
+    virtualNode.replace(vn, oldVirtualEl)
+  } else {
+    virtualNode ? virtualNode.addNode(vn) : _virtualDOM = vn
+  }
 
   jsxElement.children &&
     jsxElement.children.forEach(child => {
@@ -51,19 +55,25 @@ function render(el, jsxElement, virtualNode = undefined) {
   if (jsxElement.props) {
     const { className, onClick, ...others } = jsxElement.props
     className && newNode.setAttribute('class', className)
-    onClick && newNode.addEventListener('click', function(event) { onClick(event) }, false)
+    onClick && newNode.addEventListener('click', function (event) { onClick(event) }, false)
     others && Object.entries(others).map(([key, value]) => newNode.setAttribute(key, value))
   }
 
-  el.append(newNode)
+  if (oldVirtualEl) {
+    el.replaceChild(newNode, oldVirtualEl.el)
+    // oldVirtualEl.el.remove()
+  } else {
+    el.append(newNode)
+  }
 }
 
 function update(virtualNode, newJsxElement) {
-  let runUpdate = false
+  let runUpdateChild = false
+  let runUpdateParent = false
   if (virtualNode.type === 'primitive') {
-    if(typeof newJsxElement === 'string' || typeof newJsxElement === 'number'){
+    if (typeof newJsxElement === 'string' || typeof newJsxElement === 'number') {
       const newValue = typeof newJsxElement === 'number' ? newJsxElement.toString() : newJsxElement
-      runUpdate = virtualNode.value !== newValue
+      runUpdateChild = virtualNode.value !== newValue
     }
   }
 
@@ -71,45 +81,48 @@ function update(virtualNode, newJsxElement) {
     return update(virtualNode, newJsxElement.type(newJsxElement.props))
   }
 
-  if(virtualNode.type !== 'primitive') {
+  if (virtualNode.type !== 'primitive') {
     //Check virtual node 
-    runUpdate = virtualNode.isDiff(newJsxElement)
+    runUpdateParent = virtualNode.isDiff(newJsxElement)
 
     //Check childrens
-    if(!runUpdate && newJsxElement.children) {
-      if(!virtualNode.children ||virtualNode.children.length !== newJsxElement.children.length) {
-        runUpdate = true
+    if (!runUpdateParent && newJsxElement.children) {
+      if (!virtualNode.children || virtualNode.children.length !== newJsxElement.children.length) {
+        runUpdateChild = true
       } else {
         for (let index = 0; index < newJsxElement.children.length; index++) {
           const jsxChild = newJsxElement.children[index];
           const virtualChild = virtualNode.children[index];
-          
+
           update(virtualChild, jsxChild)
         }
       }
     }
   }
 
-  if (runUpdate) {
+  if (runUpdateChild || runUpdateParent) {
     let element = null
     let node = null
 
-    if(virtualNode.type === 'primitive') {
+    if (virtualNode.type === 'primitive') {
       node = virtualNode.parentNode
       node.removeNode(virtualNode)
       element = node.el
       virtualNode.el.remove()
       render(element, newJsxElement, node)
     } else {
-      virtualNode.el.remove()
-      virtualNode.removeAllChildren()
-      virtualNode.parentNode.removeNode(virtualNode)
-      
-      render(virtualNode.parentNode.el, newJsxElement, virtualNode.parentNode)
-      // newJsxElement.children &&
-      // newJsxElement.children.forEach(child => {
-      //   render(virtualNode.el, child, virtualNode)
-      // });
+      if (runUpdateParent) {
+        node = virtualNode.parentNode
+        // node.removeNode(virtualNode) --> We'll do it later
+        element = node.el
+        render(element, newJsxElement, node, virtualNode)
+      } else {
+        virtualNode.el.remove()
+        virtualNode.removeAllChildren()
+        virtualNode.parentNode.removeNode(virtualNode)
+
+        render(virtualNode.parentNode.el, newJsxElement, virtualNode.parentNode)
+      }
     }
   }
 }
@@ -130,7 +143,7 @@ function useState(initialState) {
     _states[setStateId] = callback(_states[setStateId])
     updateDOM()
   }
-  
+
   return [
     _states[_stateID++],
     setValue
@@ -139,8 +152,8 @@ function useState(initialState) {
 
 function useEffect(callback, newDepsArray) {
   const oldDepsArray = _effects[_effectID]
-  const runEffect = oldDepsArray ? (newDepsArray.length !== 0 && !newDepsArray.every((dep, index) => dep === oldDepsArray[index]) ) : true
-  if(runEffect) {
+  const runEffect = oldDepsArray ? (newDepsArray.length !== 0 && !newDepsArray.every((dep, index) => dep === oldDepsArray[index])) : true
+  if (runEffect) {
     callback()
     _effects[_effectID] = newDepsArray
   }

@@ -23,6 +23,13 @@ export class VirtualNode {
     return this;
   }
 
+  replace(newNode, oldNode) {
+    const index = this.children.findIndex((c) => !c.isDiff(oldNode))
+    if (index !== -1) {
+      this.children[index] = newNode
+    }
+  }
+
   removeNode(node) {
     const index = this.children.findIndex((c) => c.el.isEqualNode(node.el));
     if (index > -1) {
@@ -48,10 +55,10 @@ export class VirtualNode {
 
   isChildrenDiff(newJsxEl) {
     if (typeof newJsxEl === "string" || typeof newJsxEl === "number") {
-      if(this.type === 'primitive') {
+      if (this.type === 'primitive') {
         return false
       }
-      
+
       const newValue =
         typeof newJsxEl === "number" ? newJsxEl.toString() : newJsxEl;
       return newValue !== this.value;
